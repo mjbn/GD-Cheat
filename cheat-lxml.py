@@ -1,20 +1,19 @@
 #!/bin/python3
 from sys import argv
 from lxml import etree as et
-from git import Repo
 from subprocess import run
 from os.path import join
+from requests import get
+from bs4 import BeautifulSoup as bs
+from time import sleep
 
 
 print(argv)
-if argv[1]=="clone":
+if argv[1]=="get":
     git_url="https://github.com/godotengine/godot.git"
     repo_dir="./gd"
     subdir = "doc/classes"
-    rep = Repo.clone_from(git_url, repo_dir, no_checkout=True)
-    rep.git.sparse_checkout("init")
-    rep.git.sparse_checkout("set", subdir)
-    rep.git.checkout("main")
+    headers = {'User-Agent': 'Jodzilla/1.0 (Arch Gnu Linux 6.1.1)'}
 if argv[1]=="make":
     mdir = run(["ls", "-la", join(repo_dir,subdir)], capture_output=True, text=True).stdout
     filename=[]
