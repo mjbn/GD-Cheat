@@ -6,27 +6,49 @@ from os.path import join
 from requests import get
 from bs4 import BeautifulSoup as bs
 from time import sleep
+from os import makedirs
+import json
 
 
-print(argv)
+headers = {'User-Agent': 'Jodzilla/1.0 (Arch Gnu Linux 6.1.1)'}
+repo_dir="./gd"
+subdir = "doc/classes"
+
+
 if argv[1]=="get":
-    git_url="https://github.com/godotengine/godot.git"
-    repo_dir="./gd"
-    subdir = "doc/classes"
-    headers = {'User-Agent': 'Jodzilla/1.0 (Arch Gnu Linux 6.1.1)'}
-if argv[1]=="make":
-    mdir = run(["ls", "-la", join(repo_dir,subdir)], capture_output=True, text=True).stdout
-    filename=[]
-    for f in mdir.splitlines():
-            d = f.split()
-            if d[8]=="." or d[8]=="..":
-                continue
-            if d[0][0] == "-":
-                if filename!=None and isinstance(filename, list):
-                    filename.append(join(repo_dir,subdir,d[8]))
-            elif d[0][0] == "d":
-                continue
+    doc_url="https://github.com/godotengine/godot/tree/master/doc/classes"
+    page = get(doc_url, headers=headers)
+    soup = bs(page.text, "html.parser")
+    page.close()
+    links = soup.find_all('script', type='application/json')
+    data = json.loads(links[len(links)-1].text)
+    cleanData = data["payload"]["tree"]["items"]
+    #print(data["payload"]["tree"]["items"])
+    #print(len(data["payload"]["tree"]["items"]))
+    with open('class.json', 'w') as fp:
+        json.dump(cleanData, fp)
+    print("Please wait for 5 seconds")
+    sleep(5)
+    print("Done.")
 
-    for f in filename:
-        tree = etree.parse(f)
+
+if argv[1]=="dlxml":
+    makedirs(join(repo_dir,subdir),exist_ok=True)
+    ## Downloading XML
+    raw_url ="https://raw.githubusercontent.com/godotengine/godot/refs/heads/master/doc/classes/"
+    with open('class.json', 'r') as f:
+        data = json.load(f)
+    for i in data:
+        print(i["name"])
+        xmlf = get(raw_url+i["name"], headers=headers)
+        with open(join(repo_dir,subdir,i["name"]), "w") as x:
+            x.write(xmlf.text)
+
+if argv[1]=="mktex":
+    pass
+
+if argv[1]=="make":
+    pass
+
+
 
